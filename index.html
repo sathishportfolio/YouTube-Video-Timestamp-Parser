@@ -224,6 +224,8 @@
     });
 
     // ---------- Core logic ----------
+    const CREDIT_LINE = 'Generated using YouTube Timestamp Parser (open-source): https://github.com/sathishportfolio/YouTube-Video-Timestamp-Parser';
+
     function formatTime(totalSeconds) {
       const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
       const seconds = (totalSeconds % 60).toString().padStart(2, '0');
@@ -359,7 +361,7 @@
             const descStr = item.desc || '';
             const reactionStr = item.reaction ? ` ${item.reaction}` : '';
             return `${timeStr} - ${descStr}${reactionStr}`;
-          }).join('\n');
+          }).join('\n') + `\n\n${CREDIT_LINE}`;
 
           const htmlLines = items.map(item => {
             const seconds = item.time || 0;
@@ -368,7 +370,7 @@
             const reactionStr = item.reaction ? ` ${escapeHtml(item.reaction)}` : '';
             const timestampUrl = `${videoUrl}&t=${seconds}s`;
             return `<a class="text-brand-600 dark:text-brand-400 font-semibold hover:underline" href="${timestampUrl}" target="_blank" rel="noopener noreferrer">${timeStr}</a> - ${descStr}${reactionStr}`;
-          }).join('\n');
+          }).join('\n') + `\n\n<span class="text-slate-400 dark:text-slate-600 italic">${escapeHtml(CREDIT_LINE)}</span>`;
 
           const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
           const dateStr = lastModified ? `Last modified: ${new Date(lastModified).toLocaleString()}` : '';
