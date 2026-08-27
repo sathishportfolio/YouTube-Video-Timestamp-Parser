@@ -1,5 +1,9 @@
 # YouTube Video Timestamp Parser
 
+### 🔗 [**Open the live tool →**](https://sathishportfolio.github.io/YouTube-Video-Timestamp-Parser/)
+
+No setup needed — click the link above, then hit **Load Sample** in the tool to try it instantly with example data.
+
 ![Built with Claude Code](https://img.shields.io/badge/Built%20with-Claude%20Code-6366f1?style=flat-square)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
@@ -12,6 +16,8 @@ Turn your [YouTube Bookmarker](https://chromewebstore.google.com/detail/youtube-
 ## Why this exists
 
 Long lecture videos and tutorials are painful to revisit. Scrubbing through a 2-hour video to find "that one part about auth" wastes time you don't have.
+
+YouTube's built-in chapters help, but only at a coarse level — a single chapter can easily run 20-30 minutes, and there's no way to jump to the *specific* moment inside it that you actually cared about. That's the gap [YouTube Bookmarker](https://chromewebstore.google.com/detail/youtube-bookmarker/fnpjllldbpafaicnbgakpokibefgdeim) and this tool fill together: bookmark the exact second within a chapter, and this tool turns those fine-grained bookmarks into clickable links — giving you precision native chapters can't.
 
 [YouTube Bookmarker](https://chromewebstore.google.com/detail/youtube-bookmarker/fnpjllldbpafaicnbgakpokibefgdeim) solves the *capture* problem — it lets you drop timestamped bookmarks (with notes and reactions) while watching, and export them all as a single JSON/text file.
 
@@ -31,15 +37,15 @@ No installs, no accounts, no server — it's a single self-contained HTML file y
 2. **Export your bookmarks** — From the extension, export your bookmarks. This gives you a `.txt`/`.json` file containing every bookmarked video, grouped by video ID, e.g.:
    ```json
    {
-     "R76S0tfv36w": "[{\"time\":1602,\"desc\":\"Auth From DB\",\"reaction\":\"🥳\"},{\"time\":3060,\"desc\":\"Authentication Provider\",\"reaction\":\"🥳\"}]",
-     "T0boiBk6-hY": "[{\"time\":20,\"desc\":\"Bookmark at 00:20\"}]",
-     "lastModifiedByVideoId": "{\"R76S0tfv36w\":1787727577075,\"T0boiBk6-hY\":1787761358087}"
-   }
+      "lastModifiedByVideoId": "{\"qF20cAHKrXA\":1787797924676}",
+      "qF20cAHKrXA": "[{\"time\":855,\"desc\":\"Need for Session\"},{\"time\":895,\"desc\":\"Session Factory\"},{\"time\":966,\"desc\":\"Open Session\"},{\"time\":1040,\"desc\":\"save vs persist\"},{\"time\":1124,\"desc\":\"JPA compatibility\"},{\"time\":1245,\"desc\":\"No Config\"},{\"time\":1288,\"desc\":\"Need for .cfg.xml file\"},{\"time\":1378,\"desc\":\"Added Config\"},{\"time\":1419,\"desc\":\"@Entity\"},{\"time\":1631,\"desc\":\"Need for Transaction \"},{\"time\":1740,\"desc\":\"Create Table Error\"},{\"time\":1810,\"desc\":\"Create Table DDL\"},{\"time\":1943,\"desc\":\"Hibernate Show SQL\"},{\"time\":1975,\"desc\":\"Hibernate DDL create vs update\"},{\"time\":2134,\"desc\":\"Session Close\"},{\"time\":2292,\"desc\":\"Read\"},{\"time\":2476,\"desc\":\"Lazy vs Eager\"},{\"time\":2632,\"desc\":\"Update\"},{\"time\":2699,\"desc\":\"Hibernate Merge Steps \"},{\"time\":2777,\"desc\":\"Delete\"},{\"time\":2985,\"desc\":\"Entity vs Table\"}]"
+    }
    ```
 3. **Open this tool** — Open `YouTube Video Timestamp Parser.html` in any browser (double-click it, no installation needed).
 4. **Load your export** — Either:
-   - Click **Upload File** and select your exported `.txt`/`.json` file, **or**
-   - Paste the raw exported text directly into the textarea and click **Convert All Videos**.
+   - Click **Upload File** and select your exported `.txt`/`.json` file,
+   - Paste the raw exported text directly into the textarea and click **Convert All Videos**, **or**
+   - Click **Load Sample** to instantly try the tool with example data — no file needed.
 5. **Revise** — You'll get a card per video with its title, thumbnail, and bookmarked timestamps. Click any timestamp to jump straight to that moment on YouTube. Click **Click to copy** on a card to copy that video's full timestamp list to your clipboard.
 
 ## Tips for organizing by group
@@ -53,6 +59,8 @@ Everything runs locally in your browser. Your bookmarks file is never uploaded a
 ## Credits
 
 Built to complement [YouTube Bookmarker](https://chromewebstore.google.com/detail/youtube-bookmarker/fnpjllldbpafaicnbgakpokibefgdeim) — all bookmark capture happens there; this tool is purely for viewing and revising what you've already captured.
+
+No copyright infringement intended. This project is not affiliated with, endorsed by, or promoted by YouTube, Google, or the YouTube Bookmarker extension developers — all trademarks and video content belong to their respective owners. It's an independent, unofficial utility built purely for educational purposes, to make personal video notes easier to revisit.
 
 ## About this tool
 
