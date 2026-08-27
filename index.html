@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Timestamp Parser</title>
+  <meta name="description" content="Paste or upload YouTube timestamp JSON and get clean, clickable, copyable timestamp lists per video.">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Apply theme before paint to avoid a flash of the wrong theme.
+    (function () {
+      const stored = localStorage.getItem('theme');
+      const isDark = stored === 'dark'; // default to light mode
+      document.documentElement.classList.toggle('dark', isDark);
+    })();
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+              400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+              800: '#3730a3', 900: '#312e81',
+            },
+          },
+          animation: {
+            'fade-in': 'fadeIn .35s ease-out both',
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0, transform: 'translateY(6px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    ::selection { background-color: #6366f1; color: white; }
+    .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background-color: rgba(148,163,184,.4); border-radius: 9999px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-200 transition-colors duration-300">
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- Header -->
+    <header class="flex items-start justify-between gap-4 mb-8">
+      <div>
+        <div class="inline-flex items-center gap-2 mb-2">
+          <div class="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-brand-500/20 dark:shadow-brand-500/10">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 text-white">
+              <path d="M12 8v4l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            </svg>
+          </div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">YouTube Timestamp Parser</h1>
+        </div>
+        <p class="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          Paste raw timestamp JSON and get clean, clickable, copy-ready chapter lists for every video.
+        </p>
+      </div>
+
+      <button
+        id="themeToggle"
+        type="button"
+        aria-label="Toggle dark mode"
+        class="shrink-0 h-10 w-10 rounded-full flex items-center justify-center border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 hover:border-brand-300 dark:hover:border-brand-700 transition-colors shadow-sm">
+        <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 hidden">
+          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="2"/>
+          <path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+        </svg>
+        <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 hidden">
+          <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z"/>
+        </svg>
+      </button>
+    </header>
+
+    <!-- Input Section -->
+    <section class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 shadow-sm dark:shadow-none backdrop-blur">
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <label for="fileInput" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 cursor-pointer">
+          <span class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-600 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+              <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0 4 4m-4-4-4 4M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+            </svg>
+            Upload .txt / .json
+          </span>
+          <input type="file" id="fileInput" accept=".txt,.json" class="hidden" onchange="handleFileUpload(event)">
+        </label>
+        <span class="text-xs text-slate-400 dark:text-slate-500">or paste the raw dictionary JSON below</span>
+      </div>
+
+      <textarea
+        id="inputData"
+        placeholder='{"VIDEO_ID": "[{\"time\":12,\"desc\":\"Intro\"}]", "lastModifiedByVideoId": "{}"}'
+        class="w-full h-36 sm:h-40 mb-4 resize-y rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-600 font-mono text-[13px] leading-relaxed p-3.5 focus:outline-none focus:ring-2 focus:ring-brand-500/40 focus:border-brand-400 dark:focus:border-brand-600 transition-shadow scrollbar-thin"
+      ></textarea>
+
+      <div class="flex items-center gap-3">
+        <button
+          onclick="processInput()"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white text-sm font-semibold shadow-lg shadow-brand-600/20 hover:shadow-brand-500/30 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-4 w-4">
+            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m5 12 5 5L20 7"/>
+          </svg>
+          Convert All Videos
+        </button>
+        <button
+          onclick="clearInput()"
+          class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors">
+          Clear
+        </button>
+      </div>
+    </section>
+
+    <!-- Output -->
+    <section id="outputContainer" class="mt-8 space-y-6"></section>
+
+    <!-- About Section -->
+    <footer class="mt-16 pt-8 border-t border-slate-200 dark:border-slate-800">
+      <h2 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">About this tool</h2>
+
+      <div class="flex flex-wrap gap-2 mb-4">
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-medium px-3 py-1 border border-slate-200 dark:border-slate-700">
+          Built with <span class="font-semibold text-brand-600 dark:text-brand-400">Claude Code</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-orange-50 dark:bg-orange-500/10 text-orange-700 dark:text-orange-300 text-xs font-medium px-3 py-1 border border-orange-200 dark:border-orange-500/20">
+          HTML5
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-sky-50 dark:bg-sky-500/10 text-sky-700 dark:text-sky-300 text-xs font-medium px-3 py-1 border border-sky-200 dark:border-sky-500/20">
+          Tailwind CSS
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-xs font-medium px-3 py-1 border border-emerald-200 dark:border-emerald-500/20">
+          No build step
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-700 dark:text-fuchsia-300 text-xs font-medium px-3 py-1 border border-fuchsia-200 dark:border-fuchsia-500/20">
+          Zero dependencies*
+        </span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-yellow-50 dark:bg-yellow-500/10 text-yellow-700 dark:text-yellow-300 text-xs font-medium px-3 py-1 border border-yellow-200 dark:border-yellow-500/20">
+          MIT License
+        </span>
+      </div>
+
+      <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
+        This is a single self-contained <code class="px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[12.5px] font-mono">index.html</code> file —
+        plain HTML, vanilla JavaScript, and Tailwind CSS (loaded via CDN, marked with <span class="italic">*</span> above). There's no
+        server, no framework, and no build tooling: open the file in a browser and it works. It was designed and built end-to-end using
+        <a href="https://claude.com/claude-code" target="_blank" rel="noopener noreferrer" class="text-brand-600 dark:text-brand-400 hover:underline font-medium">Claude Code</a>,
+        Anthropic's agentic coding CLI, from the original parsing logic through this Tailwind redesign.
+      </p>
+
+      <p class="text-xs text-slate-400 dark:text-slate-600 mt-4">
+        Paste an object shaped like <code class="font-mono">{ "&lt;videoId&gt;": [{ "time": 0, "desc": "..." }], "lastModifiedByVideoId": {...} }</code> —
+        arrays may also be given as JSON-encoded strings.
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // ---------- Theme toggle ----------
+    const themeToggle = document.getElementById('themeToggle');
+    const iconSun = document.getElementById('iconSun');
+    const iconMoon = document.getElementById('iconMoon');
+
+    function syncThemeIcon() {
+      const isDark = document.documentElement.classList.contains('dark');
+      iconSun.classList.toggle('hidden', !isDark);   // show sun (switch-to-light) when currently dark
+      iconMoon.classList.toggle('hidden', isDark);   // show moon (switch-to-dark) when currently light
+    }
+    syncThemeIcon();
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      syncThemeIcon();
+    });
+
+    // ---------- Core logic ----------
+    function formatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+      const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+      return `${minutes}:${seconds}`;
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('inputData').value = e.target.result;
+        processInput();
+      };
+      reader.readAsText(file);
+    }
+
+    function clearInput() {
+      document.getElementById('inputData').value = '';
+      document.getElementById('outputContainer').innerHTML = '';
+      document.getElementById('fileInput').value = '';
+    }
+
+    function copyToClipboard(hint) {
+      const pre = hint.parentElement.querySelector('pre');
+      const textToCopy = pre.dataset.content;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const original = hint.dataset.originalLabel;
+        hint.textContent = 'Copied!';
+        hint.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400');
+        hint.classList.add('bg-emerald-500', 'text-white');
+
+        setTimeout(() => {
+          hint.textContent = original;
+          hint.classList.remove('bg-emerald-500', 'text-white');
+          hint.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-500', 'dark:text-slate-400');
+        }, 1500);
+      });
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function fetchVideoTitle(videoId) {
+      const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`)
+        .then(res => res.ok ? res.json() : Promise.reject(res.status))
+        .then(data => {
+          const link = document.getElementById(`title-${videoId}`);
+          if (link && data.title) {
+            link.textContent = data.title;
+          }
+        })
+        .catch(() => {}); // Keep fallback "Watch Video" text on failure
+    }
+
+    function showError(message) {
+      const container = document.getElementById('outputContainer');
+      container.innerHTML = `
+        <div class="animate-fade-in flex items-start gap-3 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-300 px-4 py-3 text-sm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-5 w-5 shrink-0 mt-0.5">
+            <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+            <path stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8v5M12 16h.01"/>
+          </svg>
+          <span>${message}</span>
+        </div>`;
+    }
+
+    function processInput() {
+      const input = document.getElementById('inputData').value.trim();
+      const container = document.getElementById('outputContainer');
+      container.innerHTML = '';
+
+      if (!input) {
+        showError('Please provide text or upload a file containing valid JSON input.');
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(input);
+
+        let lastModifiedMap = {};
+        if (parsed.lastModifiedByVideoId) {
+          try {
+            lastModifiedMap = typeof parsed.lastModifiedByVideoId === 'string'
+              ? JSON.parse(parsed.lastModifiedByVideoId)
+              : parsed.lastModifiedByVideoId;
+          } catch (e) {}
+        }
+
+        const videoEntries = [];
+        Object.keys(parsed).forEach(videoId => {
+          if (videoId === 'lastModifiedByVideoId') return;
+
+          let items = [];
+          const rawValue = parsed[videoId];
+
+          if (typeof rawValue === 'string') {
+            try { items = JSON.parse(rawValue); } catch (e) {}
+          } else if (Array.isArray(rawValue)) {
+            items = rawValue;
+          }
+
+          if (Array.isArray(items) && items.length > 0) {
+            const timestamp = lastModifiedMap[videoId] || 0;
+            videoEntries.push({ videoId, items, lastModified: timestamp });
+          }
+        });
+
+        videoEntries.sort((a, b) => b.lastModified - a.lastModified);
+
+        videoEntries.forEach((entry, idx) => {
+          const { videoId, items, lastModified } = entry;
+          const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+
+          const rawText = items.map(item => {
+            const timeStr = formatTime(item.time || 0);
+            const descStr = item.desc || '';
+            const reactionStr = item.reaction ? ` ${item.reaction}` : '';
+            return `${timeStr} - ${descStr}${reactionStr}`;
+          }).join('\n');
+
+          const htmlLines = items.map(item => {
+            const seconds = item.time || 0;
+            const timeStr = formatTime(seconds);
+            const descStr = escapeHtml(item.desc || '');
+            const reactionStr = item.reaction ? ` ${escapeHtml(item.reaction)}` : '';
+            const timestampUrl = `${videoUrl}&t=${seconds}s`;
+            return `<a class="text-brand-600 dark:text-brand-400 font-semibold hover:underline" href="${timestampUrl}" target="_blank" rel="noopener noreferrer">${timeStr}</a> - ${descStr}${reactionStr}`;
+          }).join('\n');
+
+          const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+          const dateStr = lastModified ? `Last modified: ${new Date(lastModified).toLocaleString()}` : '';
+
+          const card = document.createElement('div');
+          card.className = 'animate-fade-in rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 sm:p-6 shadow-sm dark:shadow-none';
+          card.style.animationDelay = `${Math.min(idx, 8) * 40}ms`;
+          card.innerHTML = `
+            <div class="flex items-center gap-4 pb-4 mb-4 border-b border-slate-100 dark:border-slate-800">
+              <a href="${videoUrl}" target="_blank" rel="noopener noreferrer" class="shrink-0">
+                <img class="w-28 sm:w-32 aspect-video object-cover rounded-lg bg-slate-100 dark:bg-slate-800" src="${thumbnailUrl}" alt="Video thumbnail" onerror="this.style.display='none'">
+              </a>
+              <div class="flex flex-col gap-1 min-w-0">
+                <a class="font-bold text-slate-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 truncate flex items-center gap-1.5 transition-colors" id="title-${videoId}" href="${videoUrl}" target="_blank" rel="noopener noreferrer">
+                  <span class="truncate">Watch Video</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="h-3.5 w-3.5 shrink-0">
+                    <path stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 17 17 7M7 7h10v10"/>
+                  </svg>
+                </a>
+                <span class="text-xs font-mono text-slate-400 dark:text-slate-500">ID: ${videoId}</span>
+                ${dateStr ? `<span class="text-[11px] text-slate-400 dark:text-slate-600">${dateStr}</span>` : ''}
+              </div>
+            </div>
+            <div class="relative">
+              <button data-original-label="Copy" onclick="copyToClipboard(this)" class="absolute top-2 right-2 text-xs font-medium px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Copy</button>
+              <pre class="whitespace-pre-wrap leading-relaxed font-mono text-[13px] bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 rounded-xl p-4 pr-16 text-slate-700 dark:text-slate-300 overflow-x-auto scrollbar-thin">${htmlLines}</pre>
+            </div>
+          `;
+
+          card.querySelector('pre').dataset.content = rawText;
+          const copyBtn = card.querySelector('button[data-original-label]');
+          copyBtn.dataset.originalLabel = copyBtn.textContent;
+          container.appendChild(card);
+          fetchVideoTitle(videoId);
+        });
+
+        if (videoEntries.length === 0) {
+          showError('No timestamp arrays found under the given video keys.');
+        }
+
+      } catch (err) {
+        showError('Invalid outer JSON format. Check your text/file content.');
+      }
+    }
+  </script>
+</body>
+</html>
